@@ -397,6 +397,21 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 <div class="scroll" id="scroll-records" style="display:none">
 <div class="panel on" id="panel-records">
   <div class="card" style="margin-bottom:10px">
+    <div class="ct">Import teams from The Blue Alliance</div>
+    <div style="font-size:13px;color:var(--mu);margin-bottom:8px">Pull the team list + Statbotics EPA for your event. Adds all teams to the picklist.</div>
+    <input type="text" id="tba-event" placeholder="Event key e.g. 2026mimid" autocorrect="off" autocapitalize="off" style="margin-bottom:6px">
+    <div style="font-size:11px;color:var(--mu);margin-bottom:8px">Find in TBA event URL: thebluealliance.com/event/<b>2026mimid</b></div>
+    <button class="btn primary" onclick="importTBA()" id="tba-btn">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Import teams + EPA
+    </button>
+    <div id="tba-msg" style="margin-top:8px"></div>
+    <div id="tba-out" style="margin-top:8px;display:none">
+      <button class="btn" style="font-size:12px;padding:4px 10px;margin-bottom:6px" onclick="document.getElementById('tba-out').style.display='none'">Hide team list</button>
+      <div id="tba-list"></div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:10px">
     <div style="display:flex;gap:8px">
       <input type="text" id="r-ev" placeholder="Filter event" style="flex:1;min-width:0" oninput="renderRec()">
       <input type="number" id="r-tm" placeholder="Team #" style="width:90px" inputmode="numeric" oninput="renderRec()">
@@ -696,16 +711,33 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 
   <div class="card">
     <div class="ct">Autonomous</div>
-    <label style="margin-top:0">Auto route description</label>
-    <textarea id="pit-auto" placeholder="Describe their auto routine(s)..." style="min-height:70px"></textarea>
-    <div class="sh" style="margin-top:10px">Starting positions</div>
+    <div class="sh" style="margin-top:0">Starting position(s)</div>
     <div class="chips" id="pit-start-chips">
-      <div class="chip" onclick="togPitCap(this,'Start A')">A</div>
-      <div class="chip" onclick="togPitCap(this,'Start B')">B</div>
-      <div class="chip" onclick="togPitCap(this,'Start C')">C</div>
-      <div class="chip" onclick="togPitCap(this,'Start D')">D</div>
-      <div class="chip" onclick="togPitCap(this,'Start E')">E</div>
+      <div class="chip" onclick="togPitCap(this,'Left trench')">Left trench</div>
+      <div class="chip" onclick="togPitCap(this,'Left bump')">Left bump</div>
+      <div class="chip" onclick="togPitCap(this,'Center')">Center</div>
+      <div class="chip" onclick="togPitCap(this,'Right bump')">Right bump</div>
+      <div class="chip" onclick="togPitCap(this,'Right trench')">Right trench</div>
     </div>
+    <div class="sh" style="margin-top:10px">Second swipe (double cycle in auto)?</div>
+    <div class="chips">
+      <div class="chip on" id="pit-2run-n" onclick="setPit2Run(false)">No</div>
+      <div class="chip" id="pit-2run-y" onclick="setPit2Run(true)">Yes</div>
+    </div>
+    <div id="pit-2run-det" style="display:none;margin-top:8px">
+      <div class="sh" style="margin-top:0">Exited via</div>
+      <div class="chips" id="pit-exit-chips">
+        <div class="chip" onclick="setExcl('pitExitVia',this,'pit-exit-chips')">Trench</div>
+        <div class="chip" onclick="setExcl('pitExitVia',this,'pit-exit-chips')">Bump</div>
+      </div>
+      <div class="sh" style="margin-top:8px">Returned via</div>
+      <div class="chips" id="pit-return-chips">
+        <div class="chip" onclick="setExcl('pitReturnVia',this,'pit-return-chips')">Trench</div>
+        <div class="chip" onclick="setExcl('pitReturnVia',this,'pit-return-chips')">Bump</div>
+      </div>
+    </div>
+    <div class="sh" style="margin-top:10px">Notes on auto</div>
+    <textarea id="pit-auto" placeholder="Any extra details about their auto..." style="min-height:50px"></textarea>
   </div>
 
   <div class="card">
@@ -756,6 +788,10 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
     Save pit scouting
   </button>
+  <button class="btn info" onclick="syncPitUp()" style="margin-top:0">
+    <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    Sync pit data ↑
+  </button>
   <button class="btn" onclick="clearPitForm()" style="margin-top:0">Clear form</button>
   <div id="pit-msg"></div>
 
@@ -785,6 +821,10 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     <button class="btn primary" id="sync-down-btn" onclick="syncDown()">
       <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       Pull all scout data ↓
+    </button>
+    <button class="btn info" id="sync-pit-down-btn" onclick="syncPitDown()" style="margin-top:8px;margin-bottom:0">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Pull all pit data ↓
     </button>
     <div id="rmsg-lead"></div>
   </div>
@@ -856,17 +896,17 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   <button class="nb" id="nav-records" onclick="navTo('records')">
     <svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>Data
   </button>
-  <button class="nb" id="nav-pick" onclick="navTo('pick')">
-    <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>Picklist
-  </button>
-  <button class="nb" id="nav-cfg" onclick="navTo('cfg')">
-    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Settings
-  </button>
   <button class="nb" id="nav-pit" onclick="navTo('pit')">
     <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>Pit
   </button>
+  <button class="nb" id="nav-pick" onclick="navTo('pick')">
+    <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>Picklist
+  </button>
   <button class="nb" id="nav-lead" onclick="navTo('lead')" style="display:none">
     <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Lead
+  </button>
+  <button class="nb" id="nav-cfg" onclick="navTo('cfg')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Settings
   </button>
 </div>
 
@@ -890,7 +930,9 @@ function boot() {
   SD  = lsGet('m494sd')  || [];
   PK  = lsGet('m494pk')  || [];
   CFG = lsGet('m494cfg') || { event: '', scout: '' };
-  NOTES = lsGet('m494notes') || {};
+  TBA_TEAMS = lsGet('m494tba') || [];
+  var savedEvent = (lsGet('m494cfg')||{}).event;
+  if (savedEvent && document.getElementById('tba-event')) document.getElementById('tba-event').value = savedEvent;
   updCount();
   document.getElementById('ev-lbl').textContent = CFG.event || 'Set event in Settings';
   document.getElementById('cfg-ev').value = CFG.event || '';
@@ -1397,8 +1439,10 @@ function renderPick() {
   var ordered  = unpicked.concat(picked);
 
   el.innerHTML = ordered.map(function(p, i) {
-    var isPicked = !!p.picked;
-    var cls = p.tier==='1'?'green': p.tier==='2'?'blue': p.tier==='x'?'red':'gray';
+    var tbaInfo = TBA_TEAMS.find(function(t){return t.team===p.team;});
+    var teamName = (tbaInfo && tbaInfo.name) ? tbaInfo.name : '';
+    var epaHtml = (tbaInfo && tbaInfo.epa !== null) ? ' <span class="badge blue">EPA: ' + tbaInfo.epa.toFixed(1) + '</span>' : '';
+
     var stats = getTeamStats(p.team);
     var pit = stats && stats.pit;
     var photoHtml = (pit && pit.photo)
@@ -1434,8 +1478,9 @@ function renderPick() {
         '<div style="flex:1;min-width:0">' +
           '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
             '<div class="pr" style="width:24px;height:24px;font-size:11px;background:' + (isPicked?'var(--hi)':(tc[p.tier]||'var(--mu)')) + '">' + (isPicked?'&#x2713;':(i+1)) + '</div>' +
-            '<span style="font-size:16px;font-weight:700;' + (isPicked?'text-decoration:line-through':'') + '">Team ' + p.team + '</span>' +
+            '<span style="font-size:16px;font-weight:700;' + (isPicked?'text-decoration:line-through':'') + '">Team ' + p.team + (teamName ? ' &mdash; ' + teamName : '') + '</span>' +
             (isPicked ? '<span class="badge gray">Picked</span>' : '<span class="badge ' + cls + '">' + (tl[p.tier]||'?') + '</span>') +
+            epaHtml +
           '</div>' +
           statsHtml +
         '</div>' +
@@ -1750,12 +1795,233 @@ function toggleDark() {
 }
 
 
-// ── PIT SCOUTING ─────────────────────────────────────────────────────
+// ── PIT SYNC UP ────────────────────────────────────────────────────────
+function syncPitUp() {
+  if (!db) { showMsg('pit-msg', 'Firebase not available. Check your connection.', 'error'); return; }
+  if (!PIT.length) { showMsg('pit-msg', 'No pit data to sync yet.', 'warn'); return; }
+  if (!CFG.scout || !CFG.event) { showMsg('pit-msg', 'Set your name and event in Settings first.', 'warn'); return; }
+
+  var btn = document.querySelector('[onclick="syncPitUp()"]');
+  if (btn) { btn.disabled = true; btn.textContent = 'Syncing...'; }
+
+  var docId = 'pit__' + CFG.event.replace(/\s+/g,'_');
+
+  db.collection('pit_scouting').doc(docId).set({
+    event: CFG.event,
+    updated: new Date().toISOString(),
+    entries: PIT
+  })
+  .then(function() {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Sync pit data \u2191'; }
+    showMsg('pit-msg', '\u2705 Synced ' + PIT.length + ' pit entries!', 'success');
+  })
+  .catch(function(err) {
+    if (btn) { btn.disabled = false; btn.innerHTML = 'Sync pit data \u2191'; }
+    showMsg('pit-msg', 'Sync failed: ' + err.message, 'error');
+  });
+}
+
+// ── PIT SYNC DOWN (lead only) ──────────────────────────────────────────
+function syncPitDown() {
+  if (!db) { showMsg('rmsg-lead', 'Firebase not available.', 'error'); return; }
+  if (!CFG.event) { showMsg('rmsg-lead', 'Set your event in Settings first.', 'warn'); return; }
+
+  var btn = document.getElementById('sync-pit-down-btn');
+  btn.disabled = true; btn.textContent = 'Pulling pit data...';
+
+  var docId = 'pit__' + CFG.event.replace(/\s+/g,'_');
+
+  db.collection('pit_scouting').doc(docId).get()
+  .then(function(doc) {
+    btn.disabled = false;
+    btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Pull all pit data \u2193';
+    if (!doc.exists) { showMsg('rmsg-lead', 'No pit data found for this event yet.', 'warn'); return; }
+    var incoming = doc.data().entries || [];
+    var added = 0;
+    incoming.forEach(function(entry) {
+      var idx = PIT.findIndex(function(p) { return p.team === entry.team; });
+      if (idx === -1) { PIT.push(entry); added++; }
+      else { PIT[idx] = entry; } // overwrite with latest
+    });
+    lsSet('m494pit', PIT);
+    renderPitList();
+    showMsg('rmsg-lead', '\u2705 Got ' + incoming.length + ' pit entries (' + added + ' new).', 'success');
+  })
+  .catch(function(err) {
+    btn.disabled = false;
+    btn.textContent = 'Pull all pit data \u2193';
+    showMsg('rmsg-lead', 'Pull failed: ' + err.message, 'error');
+  });
+}
+
+
+var TBA_TEAMS = [];
+
+var TBA_KEY = 'PiMi5I8SInjbsUUnKPGe8M5DfUkuKFMWBIvfESuQmhLbOc0qCliCtUdpZSbQGDMJ';
+
+async function importTBA() {
+  var event = (document.getElementById('tba-event').value || '').trim().toLowerCase();
+  var msg   = document.getElementById('tba-msg');
+  var out   = document.getElementById('tba-out');
+  var btn   = document.getElementById('tba-btn');
+  if (!event) { showMsg('tba-msg', 'Enter an event key (e.g. 2026mimid).', 'error'); return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Fetching...';
+  msg.innerHTML = '<div class="alert info">Pulling teams from TBA...</div>';
+  out.style.display = 'none';
+
+  try {
+    // ── TBA: team list ────────────────────────────────────────────────
+    var [teamsRes, oprsRes, rankRes] = await Promise.all([
+      fetch('https://www.thebluealliance.com/api/v3/event/' + event + '/teams/simple',  { headers: { 'X-TBA-Auth-Key': TBA_KEY } }),
+      fetch('https://www.thebluealliance.com/api/v3/event/' + event + '/oprs',           { headers: { 'X-TBA-Auth-Key': TBA_KEY } }),
+      fetch('https://www.thebluealliance.com/api/v3/event/' + event + '/rankings',       { headers: { 'X-TBA-Auth-Key': TBA_KEY } })
+    ]);
+    if (!teamsRes.ok) throw new Error('TBA error ' + teamsRes.status + ' — check the event key.');
+    var tbaTeams = await teamsRes.json();
+    tbaTeams.sort(function(a,b){ return a.team_number - b.team_number; });
+
+    // OPRs (may not exist before event starts)
+    var oprMap = {}, dprMap = {}, ccwmMap = {};
+    if (oprsRes.ok) {
+      var oprData = await oprsRes.json();
+      oprMap  = oprData.oprs  || {};
+      dprMap  = oprData.dprs  || {};
+      ccwmMap = oprData.ccwms || {};
+    }
+
+    // Rankings
+    var rankMap = {};
+    if (rankRes.ok) {
+      var rankData = await rankRes.json();
+      ((rankData && rankData.rankings) || []).forEach(function(r) {
+        rankMap[r.team_key] = r.rank;
+      });
+    }
+
+    msg.innerHTML = '<div class="alert info">Got ' + tbaTeams.length + ' teams. Pulling Statbotics EPA...</div>';
+
+    // ── Statbotics: EPA ───────────────────────────────────────────────
+    var epaMap = {}, epaAutoMap = {}, epaTeleMap = {}, epaEndMap = {};
+    try {
+      var sbRes = await fetch('https://api.statbotics.io/v3/team_events?event=' + event + '&limit=200');
+      if (sbRes.ok) {
+        var sbList = await sbRes.json();
+        if (!Array.isArray(sbList)) sbList = sbList.team_events || [];
+        sbList.forEach(function(te) {
+          var tn = te.team;
+          if (!tn || !te.epa) return;
+          var ep = te.epa;
+          if (ep.total_points)  epaMap[tn]     = ep.total_points.mean     != null ? ep.total_points.mean     : ep.total_points;
+          if (ep.auto_points)   epaAutoMap[tn]  = ep.auto_points.mean      != null ? ep.auto_points.mean      : ep.auto_points;
+          if (ep.teleop_points) epaTeleMap[tn]  = ep.teleop_points.mean    != null ? ep.teleop_points.mean    : ep.teleop_points;
+          if (ep.endgame_points)epaEndMap[tn]   = ep.endgame_points.mean   != null ? ep.endgame_points.mean   : ep.endgame_points;
+        });
+      }
+    } catch(e) { /* Statbotics optional */ }
+
+    // ── Build & store combined team data ─────────────────────────────
+    TBA_TEAMS = tbaTeams.map(function(t) {
+      var tn  = t.team_number;
+      var key = 'frc' + tn;
+      return {
+        team:    tn,
+        name:    t.nickname,
+        city:    t.city,
+        epa:     epaMap[tn]      != null ? +epaMap[tn].toFixed(1)      : null,
+        epaAuto: epaAutoMap[tn]  != null ? +epaAutoMap[tn].toFixed(1)  : null,
+        epaTele: epaTeleMap[tn]  != null ? +epaTeleMap[tn].toFixed(1)  : null,
+        epaEnd:  epaEndMap[tn]   != null ? +epaEndMap[tn].toFixed(1)   : null,
+        opr:     oprMap[key]     != null ? +oprMap[key].toFixed(1)     : null,
+        dpr:     dprMap[key]     != null ? +dprMap[key].toFixed(1)     : null,
+        ccwm:    ccwmMap[key]    != null ? +ccwmMap[key].toFixed(1)    : null,
+        rank:    rankMap[key]    || null
+      };
+    });
+    lsSet('m494tba', TBA_TEAMS);
+
+    // ── Auto-add to picklist ──────────────────────────────────────────
+    var added = 0;
+    TBA_TEAMS.forEach(function(t) {
+      if (!PK.find(function(p){ return p.team === t.team; })) {
+        PK.push({ team: t.team, tier: '3', picked: false });
+        added++;
+      }
+    });
+    if (added > 0) lsSet('m494pk', PK);
+
+    // ── Success message ───────────────────────────────────────────────
+    var withEPA = TBA_TEAMS.filter(function(t){ return t.epa !== null; }).length;
+    var withOPR = TBA_TEAMS.filter(function(t){ return t.opr !== null; }).length;
+    msg.innerHTML = '<div class="alert success">&#x2713; ' + TBA_TEAMS.length + ' teams' +
+      (withEPA  ? ' &middot; ' + withEPA + ' with EPA'  : '') +
+      (withOPR  ? ' &middot; ' + withOPR + ' with OPR'  : '') +
+      (added    ? ' &middot; ' + added + ' added to picklist' : ' &middot; Picklist up to date') + '</div>';
+
+    // ── Render combined team table ────────────────────────────────────
+    var sorted = TBA_TEAMS.slice().sort(function(a,b){
+      if (a.rank && b.rank) return a.rank - b.rank;
+      if (a.epa !== null && b.epa !== null) return b.epa - a.epa;
+      return a.team - b.team;
+    });
+
+    var listEl = document.getElementById('tba-list');
+    listEl.innerHTML =
+      '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px">' +
+      '<tr style="background:var(--bg);position:sticky;top:0">' +
+        ['Rank','Team','Name','EPA','Auto','Tele','End','OPR','DPR','Scout data'].map(function(h){
+          return '<th style="padding:5px 6px;text-align:left;border-bottom:2px solid var(--bdr);white-space:nowrap">'+h+'</th>';
+        }).join('') +
+      '</tr>' +
+      sorted.map(function(t, i) {
+        var scoutEntries = SD.filter(function(e){ return e.team === t.team; });
+        var scoutAvgAuto = scoutEntries.length ? Math.round(scoutEntries.reduce(function(s,e){return s+fuelMid(e.autoFuel);},0)/scoutEntries.length) : null;
+        var scoutAvgTele = scoutEntries.length ? Math.round(scoutEntries.reduce(function(s,e){return s+fuelMid(e.teleFuel);},0)/scoutEntries.length) : null;
+        var bg = i%2===0 ? '' : 'background:var(--bg)';
+        var hasData = scoutEntries.length > 0;
+        return '<tr style="'+bg+'">' +
+          '<td style="padding:4px 6px;border-bottom:1px solid var(--bdr)">' + (t.rank || '—') + '</td>' +
+          '<td style="padding:4px 6px;border-bottom:1px solid var(--bdr);font-weight:700;color:var(--g)">' + t.team + '</td>' +
+          '<td style="padding:4px 6px;border-bottom:1px solid var(--bdr);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (t.name||'') + '</td>' +
+          '<td style="padding:4px 6px;border-bottom:1px solid var(--bdr)">' + (t.epa     !== null ? t.epa     : '—') + '</td>' +
+          '<td style="padding:4px 6px;border-bottom:1px solid var(--bdr)">' + (t.epaAuto !== null ? t.epaAuto : '—') + '</td>' +
+          '<td style="padding:4px 6px;border-bottom:1px solid var(--bdr)">' + (t.epaTele !== null ? t.epaTele : '—') + '</td>' +
+          '<td style="padding:4px 6px;border-bottom:1px solid var(--bdr)">' + (t.epaEnd  !== null ? t.epaEnd  : '—') + '</td>' +
+          '<td style="padding:4px 6px;border-bottom:1px solid var(--bdr)">' + (t.opr     !== null ? t.opr     : '—') + '</td>' +
+          '<td style="padding:4px 6px;border-bottom:1px solid var(--bdr)">' + (t.dpr     !== null ? t.dpr     : '—') + '</td>' +
+          '<td style="padding:4px 6px;border-bottom:1px solid var(--bdr);color:' + (hasData?'var(--g)':'var(--hi)') + '">' +
+            (hasData ? scoutEntries.length + ' matches (auto~'+scoutAvgAuto+' tele~'+scoutAvgTele+')' : 'No data') +
+          '</td>' +
+        '</tr>';
+      }).join('') +
+      '</table></div>';
+    out.style.display = 'block';
+
+  } catch(err) {
+    msg.innerHTML = '<div class="alert warn">' + err.message + '</div>';
+  }
+  btn.disabled = false;
+  btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Import teams + EPA';
+}
+
+
+
+
+
 var PIT = [];
 var pitCaps = [];
 var pitFormState = {};
 
 function loadPit() { PIT = lsGet('m494pit') || []; }
+
+function setPit2Run(val) {
+  pitFormState.pit2run = val;
+  document.getElementById('pit-2run-n').className = 'chip' + (!val ? ' on' : '');
+  document.getElementById('pit-2run-y').className = 'chip' + (val  ? ' on' : '');
+  document.getElementById('pit-2run-det').style.display = val ? 'block' : 'none';
+  if (!val) { delete pitFormState.pitExitVia; delete pitFormState.pitReturnVia; }
+}
 
 function togPitCap(el, label) {
   var i = pitCaps.indexOf(label);
@@ -1797,7 +2063,10 @@ function savePit() {
     auto:  document.getElementById('pit-auto').value.trim(),
     climb: pitFormState.pitClimb || null,
     arch:  pitFormState.pitArch  || null,
-    caps:  pitCaps.slice(),
+    caps:     pitCaps.slice(),
+    pit2run:  pitFormState.pit2run  || false,
+    exitVia:  pitFormState.pitExitVia  || null,
+    returnVia:pitFormState.pitReturnVia|| null,
     notes: document.getElementById('pit-notes').value.trim(),
     photo: pitFormState.photo || null,
     ts:    new Date().toISOString()
@@ -1820,6 +2089,9 @@ function clearPitForm() {
   document.getElementById('pit-auto').value = '';
   document.getElementById('pit-notes').value = '';
   pitCaps = []; pitFormState = {};
+  document.getElementById('pit-2run-n').className = 'chip on';
+  document.getElementById('pit-2run-y').className = 'chip';
+  document.getElementById('pit-2run-det').style.display = 'none';
   document.querySelectorAll('#panel-pit .chip').forEach(function(c){c.classList.remove('on');});
   clearPitPhoto();
 }
@@ -1841,6 +2113,9 @@ function renderPitList() {
           (p.w||p.l||p.h ? '<div style="font-size:11px;color:var(--mu);margin-top:3px">' +
             (p.w?p.w+'"W ':'') + (p.l?p.l+'"L ':'') + (p.h?p.h+'"H':'') +
             (p.cap?' &middot; Cap: '+p.cap+' balls':'') + '</div>' : '') +
+          (p.pit2run ? '<div style="font-size:12px;color:var(--g);margin-top:3px">&#x21BB; Does double swipe' +
+            (p.exitVia ? ' &mdash; exit: '+p.exitVia : '') +
+            (p.returnVia ? ', return: '+p.returnVia : '') + '</div>' : '') +
           (p.auto ? '<div style="font-size:12px;color:var(--mu);margin-top:4px"><b>Auto:</b> ' + p.auto + '</div>' : '') +
           (p.notes ? '<div style="font-size:12px;color:var(--mu);margin-top:2px">' + p.notes + '</div>' : '') +
         '</div>' +
