@@ -161,16 +161,6 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
       <div class="chip on" id="ch-red" onclick="setAlliance('red')">Red</div>
       <div class="chip" id="ch-blue" onclick="setAlliance('blue')">Blue</div>
     </div>
-    <div style="display:flex;gap:10px;margin-top:10px">
-      <div style="flex:1">
-        <label style="margin-top:0">Red final score</label>
-        <input type="number" id="s-score-red" placeholder="0" min="0" inputmode="numeric">
-      </div>
-      <div style="flex:1">
-        <label style="margin-top:0">Blue final score</label>
-        <input type="number" id="s-score-blue" placeholder="0" min="0" inputmode="numeric">
-      </div>
-    </div>
     <div class="sh" style="margin-top:10px">Traversal</div>
     <div class="chips">
       <div class="chip" onclick="togCap(this,'Under trench')">Under trench</div>
@@ -216,46 +206,13 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   <div class="card">
     <div class="ct">Autonomous (20 sec)</div>
     <div class="sh">Fuel scored</div>
-    <!-- DUMPER auto -->
-    <div id="fg-auto-dumper" style="display:none">
-      <div style="font-size:12px;color:var(--mu);margin-bottom:8px">Hold while robot is dumping, release when done. Tap multiple times for multiple dumps.</div>
-      <button id="auto-dump-btn"
-        ontouchstart="startShoot('auto','dumper',event)" ontouchend="stopShoot('auto','dumper',event)"
-        onmousedown="startShoot('auto','dumper',event)" onmouseup="stopShoot('auto','dumper',event)"
-        style="width:100%;padding:22px;border-radius:var(--r);border:2px solid var(--bdr2);background:var(--bg);font-size:16px;font-weight:700;color:var(--tx);cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation;font-family:inherit;transition:background .1s,border-color .1s">
-        Hold while dumping
-      </button>
-      <div id="auto-dump-stat" style="text-align:center;margin-top:8px;font-size:13px;color:var(--mu)">0 dumps &mdash; ~0 fuel</div>
-    </div>
-    <!-- SHOOTER auto (Turret / Fixed) -->
-    <div id="fg-auto-shooter" style="display:none">
-      <div style="font-size:12px;color:var(--mu);margin-bottom:8px">Hold while robot is shooting. Release when it stops. Tap multiple times for multiple bursts.</div>
-      <button id="auto-shoot-btn"
-        ontouchstart="startShoot('auto','shooter',event)" ontouchend="stopShoot('auto','shooter',event)"
-        onmousedown="startShoot('auto','shooter',event)" onmouseup="stopShoot('auto','shooter',event)"
-        style="width:100%;padding:22px;border-radius:var(--r);border:2px solid var(--bdr2);background:var(--bg);font-size:16px;font-weight:700;color:var(--tx);cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation;font-family:inherit;transition:background .1s,border-color .1s">
-        Hold while shooting
-      </button>
-      <div id="auto-shoot-stat" style="text-align:center;margin-top:8px;font-size:13px;color:var(--mu)">0s shooting &mdash; ~0 fuel</div>
-      <div style="margin-top:8px">
-        <div style="font-size:12px;color:var(--mu);margin-bottom:6px">Accuracy</div>
-        <div class="chips" id="auto-acc-chips">
-          <div class="chip" onclick="setExcl('autoAcc',this,'auto-acc-chips')">High</div>
-          <div class="chip" onclick="setExcl('autoAcc',this,'auto-acc-chips')">Medium</div>
-          <div class="chip" onclick="setExcl('autoAcc',this,'auto-acc-chips')">Low</div>
-        </div>
-      </div>
-    </div>
-    <!-- DEFAULT (no archetype picked) -->
-    <div id="fg-auto-default">
-      <div class="fgrid" id="fg-auto">
-        <div class="fo" onclick="setFuel('auto',this,'0')"><span class="fv">0</span>none</div>
-        <div class="fo" onclick="setFuel('auto',this,'1-10')"><span class="fv">1&ndash;10</span>a few</div>
-        <div class="fo" onclick="setFuel('auto',this,'11-25')"><span class="fv">11&ndash;25</span>some</div>
-        <div class="fo" onclick="setFuel('auto',this,'26-50')"><span class="fv">26&ndash;50</span>many</div>
-        <div class="fo" onclick="setFuel('auto',this,'51-100')"><span class="fv">51&ndash;100</span>a lot</div>
-        <div class="fo" onclick="setFuel('auto',this,'100+')"><span class="fv">100+</span>huge</div>
-      </div>
+    <div class="fgrid" id="fg-auto">
+      <div class="fo" onclick="setFuel('auto',this,'0')"><span class="fv">0</span>none</div>
+      <div class="fo" onclick="setFuel('auto',this,'1-10')"><span class="fv">1&ndash;10</span>a few</div>
+      <div class="fo" onclick="setFuel('auto',this,'11-25')"><span class="fv">11&ndash;25</span>some</div>
+      <div class="fo" onclick="setFuel('auto',this,'26-50')"><span class="fv">26&ndash;50</span>many</div>
+      <div class="fo" onclick="setFuel('auto',this,'51-100')"><span class="fv">51&ndash;100</span>a lot</div>
+      <div class="fo" onclick="setFuel('auto',this,'100+')"><span class="fv">100+</span>huge</div>
     </div>
     <div class="sh" style="margin-top:8px">Crossed to neutral?</div>
     <div class="chips">
@@ -295,54 +252,29 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     <div class="ct">Transition</div>
     <div class="chips">
       <div class="chip" onclick="togCap(this,'Shoots immediately')">Shoots immediately</div>
-      <div class="chip" onclick="togCap(this,'Cycles')">Cycles</div>
+      <div class="chip" id="chip-cycles" onclick="toggleCycles(this)">Cycles</div>
       <div class="chip" onclick="togCap(this,'Passes')">Passes</div>
+    </div>
+    <div id="cycles-detail" style="display:none;margin-top:10px">
+      <div class="sh" style="margin-top:0">Cycles from</div>
+      <div class="chips">
+        <div class="chip" onclick="togCap(this,'Cycles from depot')">Depot</div>
+        <div class="chip" onclick="togCap(this,'Cycles from neutral zone')">Neutral zone</div>
+        <div class="chip" onclick="togCap(this,'Cycles from alliance zone')">Alliance zone</div>
+      </div>
     </div>
   </div>
 
   <div class="card">
     <div class="ct">Teleop (2 min 20 sec)</div>
     <div class="sh">Fuel scored</div>
-    <!-- DUMPER tele -->
-    <div id="fg-tele-dumper" style="display:none">
-      <div style="font-size:12px;color:var(--mu);margin-bottom:8px">Hold while robot is dumping, release when done. Tap for each dump.</div>
-      <button id="tele-dump-btn"
-        ontouchstart="startShoot('tele','dumper',event)" ontouchend="stopShoot('tele','dumper',event)"
-        onmousedown="startShoot('tele','dumper',event)" onmouseup="stopShoot('tele','dumper',event)"
-        style="width:100%;padding:22px;border-radius:var(--r);border:2px solid var(--bdr2);background:var(--bg);font-size:16px;font-weight:700;color:var(--tx);cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation;font-family:inherit;transition:background .1s,border-color .1s">
-        Hold while dumping
-      </button>
-      <div id="tele-dump-stat" style="text-align:center;margin-top:8px;font-size:13px;color:var(--mu)">0 dumps &mdash; ~0 fuel</div>
-    </div>
-    <!-- SHOOTER tele (Turret / Fixed) -->
-    <div id="fg-tele-shooter" style="display:none">
-      <div style="font-size:12px;color:var(--mu);margin-bottom:8px">Hold while robot is shooting. Release when it stops. Tap multiple times for bursts.</div>
-      <button id="tele-shoot-btn"
-        ontouchstart="startShoot('tele','shooter',event)" ontouchend="stopShoot('tele','shooter',event)"
-        onmousedown="startShoot('tele','shooter',event)" onmouseup="stopShoot('tele','shooter',event)"
-        style="width:100%;padding:22px;border-radius:var(--r);border:2px solid var(--bdr2);background:var(--bg);font-size:16px;font-weight:700;color:var(--tx);cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation;font-family:inherit;transition:background .1s,border-color .1s">
-        Hold while shooting
-      </button>
-      <div id="tele-shoot-stat" style="text-align:center;margin-top:8px;font-size:13px;color:var(--mu)">0s shooting &mdash; ~0 fuel</div>
-      <div style="margin-top:8px">
-        <div style="font-size:12px;color:var(--mu);margin-bottom:6px">Accuracy</div>
-        <div class="chips" id="tele-acc-chips">
-          <div class="chip" onclick="setExcl('teleAcc',this,'tele-acc-chips')">High</div>
-          <div class="chip" onclick="setExcl('teleAcc',this,'tele-acc-chips')">Medium</div>
-          <div class="chip" onclick="setExcl('teleAcc',this,'tele-acc-chips')">Low</div>
-        </div>
-      </div>
-    </div>
-    <!-- DEFAULT -->
-    <div id="fg-tele-default">
-      <div class="fgrid" id="fg-tele">
-        <div class="fo" onclick="setFuel('tele',this,'0')"><span class="fv">0</span>none</div>
-        <div class="fo" onclick="setFuel('tele',this,'1-20')"><span class="fv">1&ndash;20</span>a few</div>
-        <div class="fo" onclick="setFuel('tele',this,'21-60')"><span class="fv">21&ndash;60</span>some</div>
-        <div class="fo" onclick="setFuel('tele',this,'61-120')"><span class="fv">61&ndash;120</span>many</div>
-        <div class="fo" onclick="setFuel('tele',this,'121-200')"><span class="fv">121&ndash;200</span>a lot</div>
-        <div class="fo" onclick="setFuel('tele',this,'200+')"><span class="fv">200+</span>dominant</div>
-      </div>
+    <div class="fgrid" id="fg-tele">
+      <div class="fo" onclick="setFuel('tele',this,'0')"><span class="fv">0</span>none</div>
+      <div class="fo" onclick="setFuel('tele',this,'1-20')"><span class="fv">1&ndash;20</span>a few</div>
+      <div class="fo" onclick="setFuel('tele',this,'21-60')"><span class="fv">21&ndash;60</span>some</div>
+      <div class="fo" onclick="setFuel('tele',this,'61-120')"><span class="fv">61&ndash;120</span>many</div>
+      <div class="fo" onclick="setFuel('tele',this,'121-200')"><span class="fv">121&ndash;200</span>a lot</div>
+      <div class="fo" onclick="setFuel('tele',this,'200+')"><span class="fv">200+</span>dominant</div>
     </div>
     <div class="sh" style="margin-top:8px">Collection</div>
     <div class="chips">
@@ -406,6 +338,20 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   </div>
 
 
+
+  <div class="card">
+    <div class="ct">Match score</div>
+    <div style="display:flex;gap:10px">
+      <div style="flex:1">
+        <label style="margin-top:0">&#x1F534; Red final score</label>
+        <input type="number" id="s-score-red" placeholder="0" min="0" inputmode="numeric">
+      </div>
+      <div style="flex:1">
+        <label style="margin-top:0">&#x1F535; Blue final score</label>
+        <input type="number" id="s-score-blue" placeholder="0" min="0" inputmode="numeric">
+      </div>
+    </div>
+  </div>
 
   <div class="card">
     <div class="ct">Rating &amp; notes</div>
@@ -867,6 +813,22 @@ function selStart(z) {
   document.getElementById('sz-disp').textContent = 'Spot ' + z;
 }
 
+function toggleCycles(el) {
+  var i = F.caps.indexOf('Cycles');
+  if (i === -1) { F.caps.push('Cycles'); el.classList.add('on'); }
+  else          { F.caps.splice(i, 1);   el.classList.remove('on'); }
+  var det = document.getElementById('cycles-detail');
+  det.style.display = el.classList.contains('on') ? 'block' : 'none';
+  // If hiding, also remove sub-caps
+  if (!el.classList.contains('on')) {
+    ['Cycles from depot','Cycles from neutral zone','Cycles from alliance zone'].forEach(function(c) {
+      var idx = F.caps.indexOf(c);
+      if (idx !== -1) F.caps.splice(idx, 1);
+    });
+    document.getElementById('cycles-detail').querySelectorAll('.chip').forEach(function(c) { c.classList.remove('on'); });
+  }
+}
+
 function togCap(el, label) {
   var i = F.caps.indexOf(label);
   if (i === -1) { F.caps.push(label); el.classList.add('on'); }
@@ -894,17 +856,7 @@ function setArch(val, el) {
     var chip = document.getElementById('sotm-chip');
     if (chip) chip.classList.remove('on');
   }
-  // Adaptive fuel UI
-  var isDumper  = val === 'Dumper';
-  var isShooter = val === 'Turret' || val === 'Fixed shooter';
-  ['auto','tele'].forEach(function(phase) {
-    var dumperEl  = document.getElementById('fg-' + phase + '-dumper');
-    var shooterEl = document.getElementById('fg-' + phase + '-shooter');
-    var defaultEl = document.getElementById('fg-' + phase + '-default');
-    if (dumperEl)  dumperEl.style.display  = isDumper  ? 'block' : 'none';
-    if (shooterEl) shooterEl.style.display = isShooter ? 'block' : 'none';
-    if (defaultEl) defaultEl.style.display = (!isDumper && !isShooter) ? 'block' : 'none';
-  });
+
 }
 
 function setExcl(key, el, groupId) {
@@ -971,12 +923,7 @@ function saveEntry() {
     alliance: F.alliance, scout: CFG.scout,
     scoreRed: parseInt(document.getElementById('s-score-red').value) || null,
     scoreBlue: parseInt(document.getElementById('s-score-blue').value) || null,
-    autoShootSecs: F.autoShootSecs || null,
-    autoDumps:     F.autoDumps     || null,
-    autoFuelEst:   F.autoFuelEst   || null,
-    teleShootSecs: F.teleShootSecs || null,
-    teleDumps:     F.teleDumps     || null,
-    teleFuelEst:   F.teleFuelEst   || null,
+
     startSpot: F.start, arch: F.arch, fixedLanes: F.fixedLanes || null,
     caps: F.caps.slice(),
     autoFuel: F.autoFuel, teleFuel: F.teleFuel,
@@ -1015,17 +962,11 @@ function clearForm() {
   document.getElementById('ac-2run-det').style.display = 'none';
   document.getElementById('ac-det').style.display = 'none';
   document.getElementById('ec-det').style.display = 'none';
-  resetShootTimers();
   document.getElementById('sotm-row').style.display = 'none';
   document.getElementById('lanes-row').style.display = 'none';
-  ['auto','tele'].forEach(function(phase) {
-    var d = document.getElementById('fg-' + phase + '-dumper');
-    var s = document.getElementById('fg-' + phase + '-shooter');
-    var def = document.getElementById('fg-' + phase + '-default');
-    if (d) d.style.display = 'none';
-    if (s) s.style.display = 'none';
-    if (def) def.style.display = 'block';
-  });
+  document.getElementById('cycles-detail').style.display = 'none';
+  document.getElementById('chip-cycles').classList.remove('on');
+
   document.querySelectorAll('.fo').forEach(function(fo) { fo.classList.remove('on'); });
   ['A','B','C','D','E'].forEach(function(l) { document.getElementById('sz-' + l).className = 'sz'; });
   document.getElementById('sz-disp').textContent = 'None';
@@ -1602,112 +1543,6 @@ function exportCSV() {
   var csv = headers.join(',') + '\n' + rows.join('\n');
   var name = '494_' + (CFG.event||'event').replace(/\s+/g,'_') + '_' + Date.now() + '.csv';
   dl(name, csv, 'text/csv');
-}
-
-// ── SHOOT TIMER ───────────────────────────────────────────────────────
-// Robot capacity + rate data:
-// Dumper:        40-60 capacity, empties in 2-3s → avg 50 balls / 2.5s = 20 balls/s while dumping
-//                But a full dump = ~50 balls. Track by hold duration capped at 2.5s full dump.
-// Turret:        20-40 capacity, 10-25 balls/s → avg 30 cap, 17/s
-// Fixed 2-lane:  in between ~30-50 cap, 22-25/s → use 23/s
-// Fixed 1-lane:  ~20-35 cap, 5-15/s → use 10/s
-var CAPACITY = { dumper: 50, turret: 30, fixed2: 40, fixed1: 25 };
-var SHOOT_RATES = {
-  auto:  { turret: 17, fixed2: 23, fixed1: 10, dumper: 20 },
-  tele:  { turret: 17, fixed2: 23, fixed1: 10, dumper: 20 }
-};
-var DUMP_FULL_SECS = 2.5; // seconds for a full dump to empty
-
-function getShooterRate(phase) {
-  var arch = F.arch || '';
-  if (arch === 'Turret')        return SHOOT_RATES[phase].turret;
-  if (arch === 'Fixed shooter') {
-    var lanes = F.fixedLanes || '2';
-    return lanes === '1' ? SHOOT_RATES[phase].fixed1 : SHOOT_RATES[phase].fixed2;
-  }
-  return SHOOT_RATES[phase].turret;
-}
-
-function getDumperEst(dumpSecs) {
-  // How full was the robot when it dumped?
-  // Hold duration as fraction of a full dump (2.5s) × capacity (50)
-  var fillFraction = Math.min(dumpSecs / DUMP_FULL_SECS, 1);
-  return Math.round(fillFraction * CAPACITY.dumper);
-}
-var shootState = {
-  auto:  { shooter: { pressing:false, start:0, totalSecs:0, fuelEst:0 },
-           dumper:  { pressing:false, start:0, totalSecs:0, dumps:0, fuelEst:0 } },
-  tele:  { shooter: { pressing:false, start:0, totalSecs:0, fuelEst:0 },
-           dumper:  { pressing:false, start:0, totalSecs:0, dumps:0, fuelEst:0 } }
-};
-
-function startShoot(phase, type, e) {
-  e.preventDefault();
-  var s = shootState[phase][type];
-  if (s.pressing) return;
-  s.pressing = true;
-  s.start = Date.now();
-  var btnId = phase + '-' + (type === 'dumper' ? 'dump' : 'shoot') + '-btn';
-  var btn = document.getElementById(btnId);
-  if (btn) { btn.style.background = 'var(--g)'; btn.style.color = '#fff'; btn.style.borderColor = 'var(--gd)'; }
-}
-
-function stopShoot(phase, type, e) {
-  e.preventDefault();
-  var s = shootState[phase][type];
-  if (!s.pressing) return;
-  s.pressing = false;
-  var elapsed = (Date.now() - s.start) / 1000;
-  if (type === 'dumper') {
-    s.dumps++;
-    s.totalSecs += elapsed;
-    // Each dump: estimate how full based on hold duration vs full dump time
-    var thisDump = getDumperEst(elapsed);
-    s.fuelEst += thisDump;
-  } else {
-    s.totalSecs += elapsed;
-    var rate = getShooterRate(phase);
-    s.fuelEst = Math.round(s.totalSecs * rate);
-  }
-  var btnId = phase + '-' + (type === 'dumper' ? 'dump' : 'shoot') + '-btn';
-  var statId = phase + '-' + (type === 'dumper' ? 'dump' : 'shoot') + '-stat';
-  var btn = document.getElementById(btnId);
-  var stat = document.getElementById(statId);
-  if (btn) { btn.style.background = ''; btn.style.color = ''; btn.style.borderColor = ''; }
-  if (stat) {
-    if (type === 'dumper') {
-      var fillPct = Math.round(Math.min(elapsed / DUMP_FULL_SECS, 1) * 100);
-      stat.textContent = s.dumps + ' dump' + (s.dumps !== 1 ? 's' : '') +
-        ' \u2014 ~' + s.fuelEst + ' fuel' +
-        ' (last dump ~' + fillPct + '% full, cap ~' + CAPACITY.dumper + ')';
-    } else {
-      var rate = getShooterRate(phase);
-      stat.textContent = s.totalSecs.toFixed(1) + 's \u2014 ~' + s.fuelEst +
-        ' fuel (~' + rate + ' balls/s, cap ~' +
-        (F.arch === 'Turret' ? CAPACITY.turret : (F.fixedLanes === '1' ? CAPACITY.fixed1 : CAPACITY.fixed2)) + ')';
-    }
-  }
-  F[phase + 'ShootSecs'] = (type === 'shooter') ? s.totalSecs : null;
-  F[phase + 'Dumps']     = (type === 'dumper')  ? s.dumps     : null;
-  F[phase + 'FuelEst']   = s.fuelEst;
-}
-
-function resetShootTimers() {
-  ['auto','tele'].forEach(function(phase) {
-    ['shooter','dumper'].forEach(function(type) {
-      shootState[phase][type] = { pressing:false, start:0, totalSecs:0, dumps:0, fuelEst:0 };
-    });
-    var ids = [phase+'-dump-stat', phase+'-shoot-stat'];
-    ids.forEach(function(id) {
-      var el = document.getElementById(id);
-      if (el) el.textContent = (id.indexOf('dump')!==-1 ? '0 dumps' : '0s shooting') + ' \u2014 ~0 fuel';
-    });
-    var btns = [phase+'-dump-btn', phase+'-shoot-btn'];
-    btns.forEach(function(id) {
-      var btn = document.getElementById(id);
-      if (btn) { btn.style.background = ''; btn.style.color = ''; btn.style.borderColor = ''; }
-    });
-  });
 }
 
 // ── DARK MODE ─────────────────────────────────────────────────────────
