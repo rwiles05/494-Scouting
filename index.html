@@ -123,6 +123,16 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
       <div class="chip on" id="ch-red" onclick="setAlliance('red')">Red</div>
       <div class="chip" id="ch-blue" onclick="setAlliance('blue')">Blue</div>
     </div>
+    <div style="display:flex;gap:10px;margin-top:10px">
+      <div style="flex:1">
+        <label style="margin-top:0">Red final score</label>
+        <input type="number" id="s-score-red" placeholder="0" min="0" inputmode="numeric">
+      </div>
+      <div style="flex:1">
+        <label style="margin-top:0">Blue final score</label>
+        <input type="number" id="s-score-blue" placeholder="0" min="0" inputmode="numeric">
+      </div>
+    </div>
   </div>
 
   <div class="card">
@@ -155,7 +165,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
       <div class="chip on" id="ac-cross-n" onclick="setT2('autoCross','no','ac-cross-n','ac-cross-y')">No</div>
       <div class="chip" id="ac-cross-y" onclick="setT2('autoCross','yes','ac-cross-y','ac-cross-n')">Yes</div>
     </div>
-    <div class="sh" style="margin-top:8px">Second collection run?</div>
+    <div class="sh" style="margin-top:8px">Second swipe?</div>
     <div class="chips">
       <div class="chip on" id="ac-2run-n" onclick="set2Run(false)">No</div>
       <div class="chip" id="ac-2run-y" onclick="set2Run(true)">Yes</div>
@@ -180,8 +190,6 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     <div id="ac-det" style="display:none;margin-top:8px">
       <div class="chips" id="acl-chips">
         <div class="chip" onclick="setExcl('aclLevel',this,'acl-chips')">Low rung</div>
-        <div class="chip" onclick="setExcl('aclLevel',this,'acl-chips')">Mid rung</div>
-        <div class="chip" onclick="setExcl('aclLevel',this,'acl-chips')">High rung</div>
       </div>
     </div>
   </div>
@@ -192,8 +200,6 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
       <div class="chip" onclick="togCap(this,'Shoots immediately')">Shoots immediately</div>
       <div class="chip" onclick="togCap(this,'Cycles')">Cycles</div>
       <div class="chip" onclick="togCap(this,'Passes')">Passes</div>
-      <div class="chip" onclick="togCap(this,'Stays near hub')">Stays near hub</div>
-      <div class="chip" onclick="togCap(this,'Crosses to neutral')">Crosses to neutral</div>
     </div>
   </div>
 
@@ -319,9 +325,9 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
       <input type="number" id="r-tm" placeholder="Team #" style="width:90px" inputmode="numeric" oninput="renderRec()">
     </div>
     <select id="r-sort" style="margin-top:8px" onchange="renderRec()">
+      <option value="team">Grouped by team</option>
+      <option value="match">By match number</option>
       <option value="date">Newest first</option>
-      <option value="team">By team</option>
-      <option value="match">By match</option>
       <option value="rating">By rating</option>
     </select>
   </div>
@@ -343,11 +349,19 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
     Export all data (end of day)
   </button>
+  <button class="btn primary" onclick="showQRExport()">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="5" y="5" width="3" height="3"/><rect x="16" y="5" width="3" height="3"/><rect x="5" y="16" width="3" height="3"/><path d="M14 14h3v3"/><path d="M17 17h3v3"/><path d="M14 20h3"/></svg>
+    Show QR code (lead scans)
+  </button>
   <button class="btn info" onclick="document.getElementById('imp-f').click()">
     <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
     Import JSON from another scout
   </button>
   <input type="file" id="imp-f" accept=".json" style="display:none" onchange="impJSON(event)">
+  <button class="btn info" onclick="showQRScanner()">
+    <svg viewBox="0 0 24 24"><path d="M23 7V2h-5"/><path d="M1 7V2h5"/><path d="M23 17v5h-5"/><path d="M1 17v5h5"/><rect x="7" y="7" width="4" height="4"/><rect x="13" y="7" width="4" height="4"/><rect x="7" y="13" width="4" height="4"/><rect x="13" y="13" width="4" height="4"/></svg>
+    Scan QR from scout (lead only)
+  </button>
   <button class="btn danger" onclick="clearAll()">
     <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
     Clear all data
@@ -414,6 +428,40 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     </div>
   </div>
 </div>
+</div>
+
+<!-- QR EXPORT MODAL -->
+<div class="mbg" id="qr-export-mbg">
+  <div class="modal">
+    <div class="mhd">
+      QR Export — lead scans each code
+      <button class="mcl" onclick="closeQRExport()">&#x2715;</button>
+    </div>
+    <div class="alert info" id="qr-chunk-info">Generating...</div>
+    <div id="qr-canvas-wrap" style="display:flex;justify-content:center;margin:12px 0"></div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn" style="flex:1;margin-bottom:0" id="qr-prev-btn" onclick="qrPrev()">&#x2190; Prev</button>
+      <button class="btn primary" style="flex:1;margin-bottom:0" id="qr-next-btn" onclick="qrNext()">Next &#x2192;</button>
+    </div>
+    <div style="text-align:center;font-size:12px;color:var(--hi);margin-top:8px">Lead scouter scans each QR in order with their camera</div>
+  </div>
+</div>
+
+<!-- QR SCANNER MODAL -->
+<div class="mbg" id="qr-scanner-mbg">
+  <div class="modal">
+    <div class="mhd">
+      Scan scout QR code
+      <button class="mcl" onclick="closeQRScanner()">&#x2715;</button>
+    </div>
+    <div class="alert info">Point camera at scout's QR code. Accept each one in order.</div>
+    <div id="qr-scanner-wrap" style="width:100%;border-radius:var(--rs);overflow:hidden;background:#000;position:relative">
+      <video id="qr-video" style="width:100%;display:block" playsinline autoplay muted></video>
+      <canvas id="qr-scan-canvas" style="display:none"></canvas>
+    </div>
+    <div id="qr-scan-status" style="margin-top:10px;font-size:13px;color:var(--mu);text-align:center">Scanning...</div>
+    <div id="qr-scan-log" style="margin-top:8px;font-size:12px;color:var(--g)"></div>
+  </div>
 </div>
 
 <!-- CONFIRM MODAL -->
@@ -633,6 +681,8 @@ function saveEntry() {
     id: String(Date.now()), date: new Date().toISOString(), v: 9,
     event: CFG.event, match: mn, team: teamNum,
     alliance: F.alliance, scout: CFG.scout,
+    scoreRed: parseInt(document.getElementById('s-score-red').value) || null,
+    scoreBlue: parseInt(document.getElementById('s-score-blue').value) || null,
     startSpot: F.start, arch: F.arch,
     caps: F.caps.slice(),
     autoFuel: F.autoFuel, teleFuel: F.teleFuel,
@@ -657,6 +707,8 @@ function updCount() {
 function clearForm() {
   document.getElementById('s-tm').value = '';
   document.getElementById('s-mn').value = '';
+  document.getElementById('s-score-red').value = '';
+  document.getElementById('s-score-blue').value = '';
   document.getElementById('s-notes').value = '';
   F = { alliance:'red', start:null, caps:[], autoFuel:null, teleFuel:null, autoCross:'no', auto2run:false, autoExitVia:null, autoReturnVia:null, autoClimb:false, aclLevel:null, endClimb:false, eclLevel:null, arch:null, defense:'none', rating:null };
   document.querySelectorAll('.chip').forEach(function(c) { c.classList.remove('on'); });
@@ -781,6 +833,61 @@ function deleteSingle(el) {
 }
 
 // RECORDS
+function fuelMid(v) {
+  if (!v || v === '0') return 0;
+  var map = {'0':0,'1-10':5,'11-25':18,'26-50':38,'51-100':75,'100+':110,
+             '1-20':10,'21-60':40,'61-120':90,'121-200':160,'200+':210};
+  return map[v] || 0;
+}
+
+function toggleExpand(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function toggleTeamSelect(el) {
+  var t = el.dataset.team;
+  var teamIds = SD.filter(function(e) { return String(e.team) === String(t); }).map(function(e) { return String(e.id); });
+  var allSel = teamIds.every(function(id) { return SELECTED.indexOf(id) !== -1; });
+  if (allSel) {
+    teamIds.forEach(function(id) { var i = SELECTED.indexOf(id); if (i !== -1) SELECTED.splice(i,1); });
+  } else {
+    teamIds.forEach(function(id) { if (SELECTED.indexOf(id) === -1) SELECTED.push(id); });
+  }
+  renderRec(); updateSelBar();
+}
+
+function entryRow(e) {
+  var isSel = SELECTED.indexOf(String(e.id)) !== -1;
+  var stars = e.rating ? '\u2605'.repeat(e.rating) : '';
+  return '<div class="rc' + (isSel?' selected':'') + '" style="margin-bottom:6px">' +
+    '<div class="rc-hd">' +
+      '<div style="display:flex;align-items:center;gap:8px">' +
+        '<div class="rc-sel' + (isSel?' on':'') + '" data-id="' + e.id + '" onclick="toggleSelect(this)">' + (isSel?'&#x2713;':'') + '</div>' +
+        '<div>' +
+          '<span style="font-weight:600">M' + e.match + '</span>' +
+          '<span class="badge ' + (e.alliance==='red'?'red':'blue') + '" style="margin-left:6px">' + e.alliance + '</span>' +
+          (stars ? '<span class="badge amber" style="margin-left:4px">' + stars + '</span>' : '') +
+          (e.scoreRed!=null ? '<span style="font-size:12px;color:var(--mu);margin-left:6px">🔴' + e.scoreRed + ' 🔵' + e.scoreBlue + '</span>' : '') +
+          (e.scout ? '<span style="font-size:12px;color:var(--hi);margin-left:6px">' + e.scout + '</span>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div class="rc-acts">' +
+        '<button data-id="' + e.id + '" onclick="openEdit(this)" title="Edit">&#x270E;</button>' +
+        '<button data-id="' + e.id + '" onclick="deleteSingle(this)" title="Delete" style="color:#922b21">&#x2715;</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="rg" style="margin-top:4px">' +
+      '<div>Auto: <b>' + (e.autoFuel||'&mdash;') + '</b></div>' +
+      '<div>Tele: <b>' + (e.teleFuel||'&mdash;') + '</b></div>' +
+      '<div>Climb: <b>' + (e.endClimb?(e.endClimbLevel||'yes'):'none') + '</b></div>' +
+      '<div>Defense: <b>' + (e.defense||'none') + '</b></div>' +
+    '</div>' +
+    (e.notes ? '<div style="margin-top:4px;font-size:12px;color:var(--mu);line-height:1.5">' + e.notes + '</div>' : '') +
+  '</div>';
+}
+
 function renderRec() {
   var fev = (document.getElementById('r-ev').value || '').toLowerCase();
   var ftm = parseInt(document.getElementById('r-tm').value) || 0;
@@ -788,44 +895,64 @@ function renderRec() {
   var d = SD.slice();
   if (fev) d = d.filter(function(e) { return e.event && e.event.toLowerCase().indexOf(fev) !== -1; });
   if (ftm) d = d.filter(function(e) { return e.team === ftm; });
-  if      (srt === 'date')   d.sort(function(a,b) { return b.id - a.id; });
-  else if (srt === 'team')   d.sort(function(a,b) { return a.team - b.team; });
-  else if (srt === 'match')  d.sort(function(a,b) { return a.match - b.match; });
-  else if (srt === 'rating') d.sort(function(a,b) { return (b.rating||0) - (a.rating||0); });
   var el = document.getElementById('rec-out');
   if (!d.length) { el.innerHTML = '<div class="empty">No entries yet.</div>'; return; }
-  el.innerHTML = d.map(function(e) {
-    var stars = e.rating ? '\u2605'.repeat(e.rating) : '';
-    var caps  = (e.caps||[]).map(function(c) { return '<span class="badge gray">' + c + '</span>'; }).join('');
-    var isSel = SELECTED.indexOf(String(e.id)) !== -1;
-    return '<div class="rc' + (isSel ? ' selected' : '') + '">' +
-      '<div class="rc-hd">' +
-        '<div style="display:flex;align-items:flex-start;gap:8px">' +
-          '<div class="rc-sel' + (isSel ? ' on' : '') + '" data-id="' + e.id + '" onclick="toggleSelect(this)">' + (isSel ? '&#x2713;' : '') + '</div>' +
-          '<div>' +
-            '<span style="font-size:17px;font-weight:700">Team ' + e.team + '</span>' +
-            '<span style="font-size:12px;color:var(--mu);margin-left:6px">M' + e.match + ' &middot; ' + (e.event||'?') + (e.scout ? ' &middot; ' + e.scout : '') + '</span>' +
-            '<div style="display:flex;gap:5px;margin-top:4px">' +
-              '<span class="badge ' + (e.alliance==='red'?'red':'blue') + '">' + e.alliance + '</span>' +
-              (stars ? '<span class="badge amber">' + stars + '</span>' : '') +
-            '</div>' +
-          '</div>' +
+
+  if (srt !== 'team') {
+    if (srt === 'date') d.sort(function(a,b){return b.id-a.id;});
+    else if (srt === 'match') d.sort(function(a,b){return a.match-b.match;});
+    else if (srt === 'rating') d.sort(function(a,b){return(b.rating||0)-(a.rating||0);});
+    el.innerHTML = d.map(function(e){return entryRow(e);}).join('');
+    return;
+  }
+
+  // GROUPED BY TEAM
+  var teamMap = {};
+  d.forEach(function(e){var t=e.team;if(!teamMap[t])teamMap[t]=[];teamMap[t].push(e);});
+  var teams = Object.keys(teamMap).map(Number).sort(function(a,b){return a-b;});
+
+  el.innerHTML = teams.map(function(t) {
+    var entries = teamMap[t];
+    var n = entries.length;
+    var avgAuto = Math.round(entries.reduce(function(s,e){return s+fuelMid(e.autoFuel);},0)/n);
+    var avgTele = Math.round(entries.reduce(function(s,e){return s+fuelMid(e.teleFuel);},0)/n);
+    var rated = entries.filter(function(e){return e.rating;});
+    var avgRating = rated.length ? (rated.reduce(function(s,e){return s+e.rating;},0)/rated.length).toFixed(1) : null;
+    var climbN = entries.filter(function(e){return e.endClimb;}).length;
+    var highN = entries.filter(function(e){return e.endClimbLevel==='High';}).length;
+    var archs = {};
+    entries.forEach(function(e){if(e.arch)archs[e.arch]=(archs[e.arch]||0)+1;});
+    var topArch = Object.keys(archs).sort(function(a,b){return archs[b]-archs[a];})[0]||null;
+    var allCaps = {};
+    entries.forEach(function(e){(e.caps||[]).forEach(function(c){allCaps[c]=(allCaps[c]||0)+1;});});
+    var teamIds = entries.map(function(e){return String(e.id);});
+    var allSel = teamIds.length && teamIds.every(function(id){return SELECTED.indexOf(id)!==-1;});
+    var expandId = 'exp-' + t;
+
+    return '<div class="card" style="margin-bottom:10px">' +
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">' +
+        '<div class="rc-sel' + (allSel?' on':'') + '" data-team="' + t + '" onclick="toggleTeamSelect(this)">' + (allSel?'&#x2713;':'') + '</div>' +
+        '<div style="flex:1">' +
+          '<span style="font-size:18px;font-weight:700">Team ' + t + '</span>' +
+          '<span style="font-size:12px;color:var(--mu);margin-left:8px">' + n + ' match' + (n!==1?'es':'') + '</span>' +
         '</div>' +
-        '<div class="rc-acts">' +
-          '<button data-id="' + e.id + '" onclick="openEdit(this)" title="Edit">&#x270E;</button>' +
-          '<button data-id="' + e.id + '" onclick="deleteSingle(this)" title="Delete" style="color:#922b21">&#x2715;</button>' +
-        '</div>' +
+        '<button onclick="toggleExpand(\'' + expandId + '\')" style="background:none;border:1px solid var(--bdr);border-radius:var(--rs);padding:5px 12px;font-size:12px;color:var(--mu);cursor:pointer;touch-action:manipulation;font-family:inherit">Details</button>' +
       '</div>' +
-      '<div class="rg">' +
-        '<div>Start: <b>' + (e.startSpot||'&mdash;') + '</b></div>' +
-        '<div>Type: <b>' + (e.arch||'&mdash;') + '</b></div>' +
-        '<div>Auto fuel: <b>' + (e.autoFuel||'&mdash;') + '</b></div>' +
-        '<div>Tele fuel: <b>' + (e.teleFuel||'&mdash;') + '</b></div>' +
-        '<div>Climb: <b>' + (e.endClimb ? (e.endClimbLevel||'yes') : 'none') + '</b></div>' +
-        '<div>Defense: <b>' + (e.defense||'none') + '</b></div>' +
+      '<div class="rg" style="margin-bottom:8px">' +
+        '<div>Avg auto: <b>~' + avgAuto + '</b></div>' +
+        '<div>Avg tele: <b>~' + avgTele + '</b></div>' +
+        '<div>Climbed: <b>' + climbN + '/' + n + ' (' + Math.round(climbN/n*100) + '%)</b></div>' +
+        '<div>High climbs: <b>' + highN + '</b></div>' +
+        (avgRating ? '<div>Avg rating: <b>' + avgRating + '/5</b></div>' : '<div></div>') +
+        '<div>Archetype: <b>' + (topArch||'&mdash;') + '</b></div>' +
       '</div>' +
-      (caps ? '<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">' + caps + '</div>' : '') +
-      (e.notes ? '<div style="margin-top:6px;font-size:12px;color:var(--mu);line-height:1.5">' + e.notes + '</div>' : '') +
+      (Object.keys(allCaps).length ? '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">' +
+        Object.keys(allCaps).map(function(c){return '<span class="badge gray">'+c+' ('+allCaps[c]+')</span>';}).join('') +
+      '</div>' : '') +
+      '<div id="' + expandId + '" style="display:none">' +
+        '<div style="font-size:11px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;border-top:1px solid var(--bdr);padding-top:8px">Individual matches</div>' +
+        entries.slice().sort(function(a,b){return a.match-b.match;}).map(function(e){return entryRow(e);}).join('') +
+      '</div>' +
     '</div>';
   }).join('');
 }
@@ -957,6 +1084,172 @@ function fixField() {
 
 window.addEventListener('load', function() { boot(); fixField(); });
 window.addEventListener('resize', fixField);
+</script>
+<!-- QR Code generation library -->
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<!-- jsQR for scanning -->
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script>
+// ── QR EXPORT ─────────────────────────────────────────────────────────
+var QR_CHUNKS = [];
+var QR_IDX = 0;
+var QR_CHUNK_SIZE = 5; // entries per QR code
+
+function showQRExport() {
+  if (!SD.length) { showMsg('rmsg', 'No data to export.', 'warn'); return; }
+
+  // Split SD into chunks
+  QR_CHUNKS = [];
+  for (var i = 0; i < SD.length; i += QR_CHUNK_SIZE) {
+    QR_CHUNKS.push(SD.slice(i, i + QR_CHUNK_SIZE));
+  }
+  QR_IDX = 0;
+  document.getElementById('qr-export-mbg').classList.add('on');
+  renderQRChunk();
+}
+
+function renderQRChunk() {
+  var wrap = document.getElementById('qr-canvas-wrap');
+  wrap.innerHTML = '';
+  var total = QR_CHUNKS.length;
+  var chunk = QR_CHUNKS[QR_IDX];
+  var info = document.getElementById('qr-chunk-info');
+  info.textContent = 'Code ' + (QR_IDX+1) + ' of ' + total + ' — ' + chunk.length + ' entries' + (total > 1 ? ' (scan all ' + total + ' codes in order)' : '');
+
+  var payload = '494SCOUT:' + JSON.stringify({
+    src: '494_qr',
+    scout: CFG.scout,
+    event: CFG.event,
+    chunk: QR_IDX,
+    total: total,
+    entries: chunk
+  });
+
+  try {
+    new QRCode(wrap, {
+      text: payload,
+      width: 240,
+      height: 240,
+      correctLevel: QRCode.CorrectLevel.L
+    });
+  } catch(e) {
+    wrap.innerHTML = '<div class="alert error">Chunk too large — try reducing entries per scan.</div>';
+  }
+
+  document.getElementById('qr-prev-btn').disabled = QR_IDX === 0;
+  document.getElementById('qr-prev-btn').style.opacity = QR_IDX === 0 ? '.4' : '1';
+  document.getElementById('qr-next-btn').textContent = QR_IDX === total-1 ? 'Done' : 'Next \u2192';
+}
+
+function qrNext() {
+  if (QR_IDX < QR_CHUNKS.length - 1) { QR_IDX++; renderQRChunk(); }
+  else closeQRExport();
+}
+
+function qrPrev() {
+  if (QR_IDX > 0) { QR_IDX--; renderQRChunk(); }
+}
+
+function closeQRExport() {
+  document.getElementById('qr-export-mbg').classList.remove('on');
+  document.getElementById('qr-canvas-wrap').innerHTML = '';
+  QR_CHUNKS = []; QR_IDX = 0;
+}
+
+// ── QR SCANNER ────────────────────────────────────────────────────────
+var scanStream = null;
+var scanTimer = null;
+var scannedChunks = {};
+var scanTotal = null;
+
+function showQRScanner() {
+  scannedChunks = {}; scanTotal = null;
+  document.getElementById('qr-scan-log').innerHTML = '';
+  document.getElementById('qr-scan-status').textContent = 'Starting camera...';
+  document.getElementById('qr-scanner-mbg').classList.add('on');
+
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+    .then(function(stream) {
+      scanStream = stream;
+      var video = document.getElementById('qr-video');
+      video.srcObject = stream;
+      video.play();
+      document.getElementById('qr-scan-status').textContent = 'Point at QR code...';
+      scanTimer = setInterval(scanFrame, 250);
+    })
+    .catch(function(err) {
+      document.getElementById('qr-scan-status').textContent = 'Camera error: ' + err.message;
+    });
+}
+
+function scanFrame() {
+  var video = document.getElementById('qr-video');
+  if (video.readyState !== video.HAVE_ENOUGH_DATA) return;
+  var canvas = document.getElementById('qr-scan-canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  var ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0);
+  var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  if (typeof jsQR === 'undefined') {
+    document.getElementById('qr-scan-status').textContent = 'Scanner library loading...';
+    return;
+  }
+  var code = jsQR(imgData.data, imgData.width, imgData.height, { inversionAttempts: 'dontInvert' });
+  if (!code) return;
+
+  try {
+    var raw = code.data;
+    if (raw.indexOf('494SCOUT:') !== 0) { document.getElementById('qr-scan-status').textContent = 'Not a 494 scouting QR — try again'; return; }
+    var obj = JSON.parse(raw.slice(9));
+
+    var chunkIdx = obj.chunk;
+    if (scannedChunks[chunkIdx] !== undefined) {
+      document.getElementById('qr-scan-status').textContent = 'Code ' + (chunkIdx+1) + ' already scanned — show next code';
+      return;
+    }
+
+    scanTotal = obj.total;
+    scannedChunks[chunkIdx] = obj.entries;
+    var scannedCount = Object.keys(scannedChunks).length;
+    document.getElementById('qr-scan-log').innerHTML += '<div>&#x2713; Code ' + (chunkIdx+1) + ' of ' + scanTotal + ' scanned (' + obj.entries.length + ' entries from ' + (obj.scout||'scout') + ')</div>';
+
+    if (scannedCount >= scanTotal) {
+      // All chunks received — merge
+      var allEntries = [];
+      for (var i = 0; i < scanTotal; i++) {
+        if (scannedChunks[i]) allEntries = allEntries.concat(scannedChunks[i]);
+      }
+      var added = 0;
+      allEntries.forEach(function(entry) {
+        if (!SD.find(function(d) { return String(d.id) === String(entry.id); })) { SD.push(entry); added++; }
+      });
+      lsSet('m494sd', SD); updCount();
+      document.getElementById('qr-scan-status').textContent = 'Done! Imported ' + added + ' new entries.';
+      clearInterval(scanTimer);
+      stopCamera();
+      setTimeout(function() { closeQRScanner(); renderRec(); }, 2000);
+    } else {
+      document.getElementById('qr-scan-status').textContent = 'Got ' + scannedCount + '/' + scanTotal + ' — show next code';
+    }
+  } catch(e) {
+    // Not valid JSON, ignore
+  }
+}
+
+function closeQRScanner() {
+  clearInterval(scanTimer);
+  stopCamera();
+  document.getElementById('qr-scanner-mbg').classList.remove('on');
+  scannedChunks = {}; scanTotal = null;
+}
+
+function stopCamera() {
+  if (scanStream) {
+    scanStream.getTracks().forEach(function(t) { t.stop(); });
+    scanStream = null;
+  }
+}
 </script>
 </body>
 </html>
