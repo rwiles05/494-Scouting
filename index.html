@@ -456,7 +456,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     </div>
     <div class="alert info">Point camera at scout's QR code. Accept each one in order.</div>
     <div id="qr-scanner-wrap" style="width:100%;border-radius:var(--rs);overflow:hidden;background:#000;position:relative">
-      <video id="qr-video" style="width:100%;display:block" playsinline autoplay muted></video>
+      <video id="qr-video" style="width:100%;display:block;max-height:300px;object-fit:cover" playsinline autoplay muted></video>
       <canvas id="qr-scan-canvas" style="display:none"></canvas>
     </div>
     <div id="qr-scan-status" style="margin-top:10px;font-size:13px;color:var(--mu);text-align:center">Scanning...</div>
@@ -1158,64 +1158,96 @@ function closeQRExport() {
 
 // ── QR SCANNER ────────────────────────────────────────────────────────
 var scanStream = null;
-var scanTimer = null;
+var scanAnimFrame = null;
 var scannedChunks = {};
 var scanTotal = null;
+var lastScanned = '';
+var lastScannedTime = 0;
 
 function showQRScanner() {
-  scannedChunks = {}; scanTotal = null;
+  scannedChunks = {}; scanTotal = null; lastScanned = ''; lastScannedTime = 0;
   document.getElementById('qr-scan-log').innerHTML = '';
   document.getElementById('qr-scan-status').textContent = 'Starting camera...';
   document.getElementById('qr-scanner-mbg').classList.add('on');
 
-  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-    .then(function(stream) {
-      scanStream = stream;
-      var video = document.getElementById('qr-video');
-      video.srcObject = stream;
-      video.play();
-      document.getElementById('qr-scan-status').textContent = 'Point at QR code...';
-      scanTimer = setInterval(scanFrame, 250);
-    })
-    .catch(function(err) {
-      document.getElementById('qr-scan-status').textContent = 'Camera error: ' + err.message;
-    });
-}
-
-function scanFrame() {
-  var video = document.getElementById('qr-video');
-  if (video.readyState !== video.HAVE_ENOUGH_DATA) return;
-  var canvas = document.getElementById('qr-scan-canvas');
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  var ctx = canvas.getContext('2d');
-  ctx.drawImage(video, 0, 0);
-  var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  if (typeof jsQR === 'undefined') {
-    document.getElementById('qr-scan-status').textContent = 'Scanner library loading...';
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    document.getElementById('qr-scan-status').textContent = 'Camera not supported on this device/browser. Use JSON export instead.';
     return;
   }
-  var code = jsQR(imgData.data, imgData.width, imgData.height, { inversionAttempts: 'dontInvert' });
-  if (!code) return;
 
+  navigator.mediaDevices.getUserMedia({
+    video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
+  })
+  .then(function(stream) {
+    scanStream = stream;
+    var video = document.getElementById('qr-video');
+    video.srcObject = stream;
+    video.setAttribute('playsinline', true);
+    video.play().then(function() {
+      document.getElementById('qr-scan-status').textContent = 'Point at QR code \u2014 hold steady';
+      scanLoop();
+    }).catch(function(e) {
+      document.getElementById('qr-scan-status').textContent = 'Video play error: ' + e.message;
+    });
+  })
+  .catch(function(err) {
+    var msg = err.name === 'NotAllowedError' ? 'Camera permission denied. Allow camera access and try again.' : 'Camera error: ' + err.message;
+    document.getElementById('qr-scan-status').textContent = msg;
+  });
+}
+
+function scanLoop() {
+  var video = document.getElementById('qr-video');
+  var canvas = document.getElementById('qr-scan-canvas');
+
+  if (!video || !scanStream) return;
+
+  // Draw even if readyState < 4 — iOS often stays at 3
+  if (video.videoWidth > 0 && video.videoHeight > 0) {
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    if (typeof jsQR !== 'undefined') {
+      var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      var code = jsQR(imgData.data, imgData.width, imgData.height, { inversionAttempts: 'attemptBoth' });
+
+      if (code && code.data) {
+        var now = Date.now();
+        // Debounce: don't reprocess same QR within 2 seconds
+        if (code.data !== lastScanned || now - lastScannedTime > 2000) {
+          lastScanned = code.data;
+          lastScannedTime = now;
+          processQRData(code.data);
+        }
+      }
+    }
+  }
+
+  scanAnimFrame = requestAnimationFrame(scanLoop);
+}
+
+function processQRData(raw) {
+  if (raw.indexOf('494SCOUT:') !== 0) {
+    document.getElementById('qr-scan-status').textContent = 'Not a 494 scouting QR \u2014 try again';
+    return;
+  }
   try {
-    var raw = code.data;
-    if (raw.indexOf('494SCOUT:') !== 0) { document.getElementById('qr-scan-status').textContent = 'Not a 494 scouting QR — try again'; return; }
     var obj = JSON.parse(raw.slice(9));
-
     var chunkIdx = obj.chunk;
     if (scannedChunks[chunkIdx] !== undefined) {
-      document.getElementById('qr-scan-status').textContent = 'Code ' + (chunkIdx+1) + ' already scanned — show next code';
+      document.getElementById('qr-scan-status').textContent = 'Code ' + (chunkIdx+1) + ' already got \u2014 show next code';
       return;
     }
-
     scanTotal = obj.total;
     scannedChunks[chunkIdx] = obj.entries;
     var scannedCount = Object.keys(scannedChunks).length;
-    document.getElementById('qr-scan-log').innerHTML += '<div>&#x2713; Code ' + (chunkIdx+1) + ' of ' + scanTotal + ' scanned (' + obj.entries.length + ' entries from ' + (obj.scout||'scout') + ')</div>';
+    document.getElementById('qr-scan-log').innerHTML +=
+      '<div style="color:var(--g)">\u2713 Code ' + (chunkIdx+1) + '/' + obj.total +
+      ' \u2014 ' + obj.entries.length + ' entries from ' + (obj.scout||'scout') + '</div>';
 
     if (scannedCount >= scanTotal) {
-      // All chunks received — merge
       var allEntries = [];
       for (var i = 0; i < scanTotal; i++) {
         if (scannedChunks[i]) allEntries = allEntries.concat(scannedChunks[i]);
@@ -1225,23 +1257,23 @@ function scanFrame() {
         if (!SD.find(function(d) { return String(d.id) === String(entry.id); })) { SD.push(entry); added++; }
       });
       lsSet('m494sd', SD); updCount();
-      document.getElementById('qr-scan-status').textContent = 'Done! Imported ' + added + ' new entries.';
-      clearInterval(scanTimer);
+      document.getElementById('qr-scan-status').textContent = '\u2705 Done! Imported ' + added + ' new entries.';
+      cancelAnimationFrame(scanAnimFrame);
       stopCamera();
-      setTimeout(function() { closeQRScanner(); renderRec(); }, 2000);
+      setTimeout(function() { closeQRScanner(); renderRec(); }, 2500);
     } else {
-      document.getElementById('qr-scan-status').textContent = 'Got ' + scannedCount + '/' + scanTotal + ' — show next code';
+      document.getElementById('qr-scan-status').textContent = 'Got ' + scannedCount + '/' + scanTotal + ' \u2014 show next code';
     }
   } catch(e) {
-    // Not valid JSON, ignore
+    document.getElementById('qr-scan-status').textContent = 'Parse error \u2014 try again';
   }
 }
 
 function closeQRScanner() {
-  clearInterval(scanTimer);
+  cancelAnimationFrame(scanAnimFrame);
   stopCamera();
   document.getElementById('qr-scanner-mbg').classList.remove('on');
-  scannedChunks = {}; scanTotal = null;
+  scannedChunks = {}; scanTotal = null; lastScanned = ''; lastScannedTime = 0;
 }
 
 function stopCamera() {
