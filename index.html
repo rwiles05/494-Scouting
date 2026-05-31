@@ -1097,7 +1097,7 @@ window.addEventListener('resize', fixField);
 // ── QR EXPORT ─────────────────────────────────────────────────────────
 var QR_CHUNKS = [];
 var QR_IDX = 0;
-var QR_CHUNK_SIZE = 5; // entries per QR code
+var QR_CHUNK_SIZE = 2; // entries per QR code — smaller = simpler QR = easier to scan
 
 function showQRExport() {
   if (!SD.length) { showMsg('rmsg', 'No data to export.', 'warn'); return; }
@@ -1129,12 +1129,14 @@ function renderQRChunk() {
     entries: chunk
   });
 
+  // Scale QR to fill screen width for easiest scanning
+  var qrSize = Math.min(window.innerWidth - 60, 320);
   try {
     new QRCode(wrap, {
       text: payload,
-      width: 240,
-      height: 240,
-      correctLevel: QRCode.CorrectLevel.L
+      width: qrSize,
+      height: qrSize,
+      correctLevel: QRCode.CorrectLevel.M
     });
   } catch(e) {
     wrap.innerHTML = '<div class="alert error">Chunk too large — try reducing entries per scan.</div>';
@@ -1180,10 +1182,13 @@ function decodeQRFromImage(evt) {
   var img = new Image();
   img.onload = function() {
     var canvas = document.getElementById('qr-scan-canvas');
-    canvas.width = img.width;
-    canvas.height = img.height;
+    // Scale down large images — jsQR works best around 600-800px
+    var maxDim = 800;
+    var scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+    canvas.width  = Math.round(img.width  * scale);
+    canvas.height = Math.round(img.height * scale);
     var ctx = canvas.getContext('2d');
-    ctx.drawImage(img, 0, 0);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
     if (typeof jsQR === 'undefined') {
@@ -1191,14 +1196,26 @@ function decodeQRFromImage(evt) {
       return;
     }
 
+    // Try decode at scaled size first, then full size if that fails
     var code = jsQR(imgData.data, imgData.width, imgData.height, { inversionAttempts: 'attemptBoth' });
+
+    if (!code && scale < 1) {
+      // Try at full resolution
+      canvas.width  = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+      var fullData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      code = jsQR(fullData.data, fullData.width, fullData.height, { inversionAttempts: 'attemptBoth' });
+    }
+
     if (!code) {
-      document.getElementById('qr-scan-status').textContent = 'No QR code found in photo. Try again, make sure the QR fills the frame.';
+      document.getElementById('qr-scan-status').textContent = 'No QR found — try brighter lighting or hold phone further back so the whole QR is visible.';
       document.getElementById('qr-img-input').value = '';
       return;
     }
     processQRData(code.data);
     document.getElementById('qr-img-input').value = '';
+    URL.revokeObjectURL(img.src);
   };
   img.onerror = function() {
     document.getElementById('qr-scan-status').textContent = 'Could not read image. Try again.';
