@@ -3,10 +3,32 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="494 Scout">
 <meta name="theme-color" content="#1a7a3a">
+<!-- Firebase — must load before app script -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+var db = null;
+try {
+  firebase.initializeApp({
+    apiKey: "AIzaSyDh4LUQZYdEjQ1yyzXURRiXC7kyaA5EeZo",
+    authDomain: "scouting-6ff29.firebaseapp.com",
+    projectId: "scouting-6ff29",
+    storageBucket: "scouting-6ff29.firebasestorage.app",
+    messagingSenderId: "782502337430",
+    appId: "1:782502337430:web:90d0efd85cffe0dcef1bb7"
+  });
+  db = firebase.firestore();
+} catch(e) {
+  console.warn('Firebase init failed:', e.message);
+}
+</script>
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiB2aWV3Qm94PSIwIDAgMTkyIDE5MiI+CiAgPHJlY3Qgd2lkdGg9IjE5MiIgaGVpZ2h0PSIxOTIiIHJ4PSI0MCIgZmlsbD0iIzFhN2EzYSIvPgogIDx0ZXh0IHg9Ijk2IiB5PSIxMzAiIGZvbnQtc2l6ZT0iMTAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj4mI3gxRjY4MDs8L3RleHQ+Cjwvc3ZnPg==">
 <title>494 Martians Scout</title>
 <style>
@@ -345,13 +367,27 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   <div id="rec-out"></div>
 
   <div class="dvdr"></div>
-  <button class="btn primary" onclick="exportAll()">
-    <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-    Send data to lead scouter
-  </button>
-  <button class="btn info" onclick="document.getElementById('imp-f').click()">
+
+  <div class="alert info" style="margin-bottom:10px">
+    <strong>Scouts:</strong> tap Sync after each match or at end of day.<br>
+    <strong>Lead scouter:</strong> tap Pull to download everyone's data.
+  </div>
+
+  <button class="btn primary" id="sync-up-btn" onclick="syncUp()">
     <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-    Import data from scout (lead only)
+    Sync my data ↑
+  </button>
+  <button class="btn info" id="sync-down-btn" onclick="syncDown()">
+    <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Pull all scout data ↓
+  </button>
+  <button class="btn" onclick="exportAll()">
+    <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Export JSON (offline backup)
+  </button>
+  <button class="btn" onclick="document.getElementById('imp-f').click()">
+    <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    Import JSON (offline backup)
   </button>
   <input type="file" id="imp-f" accept=".json" style="display:none" onchange="impJSON(event)">
   <button class="btn info" onclick="showQRScanner()">
@@ -390,9 +426,9 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   </div>
   <div class="sh">Picklist</div>
   <div id="pick-out"></div>
-  <button class="btn primary" onclick="exportAll()">
-    <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-    Export all data (end of day)
+  <button class="btn primary" id="sync-up-btn2" onclick="syncUp()">
+    <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    Sync my data ↑
   </button>
 </div>
 </div>
@@ -1102,10 +1138,98 @@ function fixField() {
 window.addEventListener('load', function() { boot(); fixField(); });
 window.addEventListener('resize', fixField);
 </script>
-<!-- QR Code generation library -->
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-<!-- jsQR for scanning -->
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<!-- Firebase sync functions -->
+<script>
+function setSyncBtns(text, disabled) {
+  ['sync-up-btn','sync-up-btn2'].forEach(function(id) {
+    var b = document.getElementById(id);
+    if (b) { b.disabled = disabled; b.childNodes[b.childNodes.length-1].textContent = ' ' + text; }
+  });
+}
+
+// ── SYNC UP (scout sends data) ─────────────────────────────────────────
+function syncUp() {
+  if (!db) { showMsg('rmsg', 'Firebase not loaded. Open the app in Safari (not from home screen cache) and try again.', 'error'); return; }
+  if (!SD.length) { showMsg('rmsg', 'No data to sync yet.', 'warn'); return; }
+  if (!CFG.scout || !CFG.event) { showMsg('rmsg', 'Set your name and event in Settings first.', 'warn'); return; }
+
+  setSyncBtns('Syncing...', true);
+
+  var docId = CFG.event.replace(/\s+/g,'_') + '__' + (CFG.scout||'scout').replace(/\s+/g,'_');
+
+  db.collection('scouting').doc(docId).set({
+    scout: CFG.scout,
+    event: CFG.event,
+    updated: new Date().toISOString(),
+    entries: SD,
+    picklist: PK
+  })
+  .then(function() {
+    setSyncBtns('Sync my data \u2191', false);
+    showMsg('rmsg', '\u2705 Synced! ' + SD.length + ' entries uploaded.', 'success');
+  })
+  .catch(function(err) {
+    setSyncBtns('Sync my data \u2191', false);
+    showMsg('rmsg', 'Sync failed: ' + err.message, 'error');
+  });
+}
+
+// ── PULL DOWN (lead scouter gets all data) ─────────────────────────────
+function syncDown() {
+  if (!db) { showMsg('rmsg', 'Firebase not loaded. Open the app in Safari (not from home screen cache) and try again.', 'error'); return; }
+  if (!CFG.event) { showMsg('rmsg', 'Set your event in Settings first.', 'warn'); return; }
+
+  var btn = document.getElementById('sync-down-btn');
+  btn.disabled = true;
+  btn.textContent = 'Pulling...';
+
+  // Query all docs for this event (doc IDs start with event name)
+  db.collection('scouting')
+    .where('event', '==', CFG.event)
+    .get()
+    .then(function(snapshot) {
+      if (snapshot.empty) {
+        btn.disabled = false;
+        btn.textContent = 'Pull all scout data \u2193';
+        showMsg('rmsg', 'No data found for event "' + CFG.event + '". Make sure scouts have synced.', 'warn');
+        return;
+      }
+
+      var totalAdded = 0;
+      var scouts = [];
+      snapshot.forEach(function(doc) {
+        var d = doc.data();
+        scouts.push(d.scout || 'unknown');
+        var entries = d.entries || [];
+        entries.forEach(function(entry) {
+          if (!SD.find(function(x) { return String(x.id) === String(entry.id); })) {
+            SD.push(entry);
+            totalAdded++;
+          }
+        });
+        // Merge picklist too
+        if (d.picklist) {
+          d.picklist.forEach(function(p) {
+            if (!PK.find(function(x) { return x.team === p.team; })) PK.push(p);
+          });
+          lsSet('m494pk', PK);
+        }
+      });
+
+      lsSet('m494sd', SD);
+      updCount();
+      renderRec();
+      btn.disabled = false;
+      btn.textContent = 'Pull all scout data \u2193';
+      showMsg('rmsg', '\u2705 Got data from: ' + scouts.join(', ') + '. Added ' + totalAdded + ' new entries.', 'success');
+    })
+    .catch(function(err) {
+      btn.disabled = false;
+      btn.textContent = 'Pull all scout data \u2193';
+      showMsg('rmsg', 'Pull failed: ' + err.message, 'error');
+    });
+}
+</script>
 <script>
 // ── QR EXPORT ─────────────────────────────────────────────────────────
 var QR_CHUNKS = [];
