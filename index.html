@@ -347,15 +347,11 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   <div class="dvdr"></div>
   <button class="btn primary" onclick="exportAll()">
     <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-    Export all data (end of day)
-  </button>
-  <button class="btn primary" onclick="showQRExport()">
-    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="5" y="5" width="3" height="3"/><rect x="16" y="5" width="3" height="3"/><rect x="5" y="16" width="3" height="3"/><path d="M14 14h3v3"/><path d="M17 17h3v3"/><path d="M14 20h3"/></svg>
-    Show QR code (lead scans)
+    Send data to lead scouter
   </button>
   <button class="btn info" onclick="document.getElementById('imp-f').click()">
     <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-    Import JSON from another scout
+    Import data from scout (lead only)
   </button>
   <input type="file" id="imp-f" accept=".json" style="display:none" onchange="impJSON(event)">
   <button class="btn info" onclick="showQRScanner()">
@@ -1020,10 +1016,27 @@ function saveCFG() {
 // EXPORT / IMPORT
 function exportAll() {
   if (!SD.length && !PK.length) { showMsg('rmsg', 'No data to export yet.', 'warn'); return; }
-  var payload = { src:'494_scout_v9', exported:new Date().toISOString(), scout:CFG.scout, event:CFG.event, entries:SD, picklist:PK };
+  var payload = { src:'494_scout_v11', exported:new Date().toISOString(), scout:CFG.scout, event:CFG.event, entries:SD, picklist:PK };
   var name = '494_' + (CFG.scout||'scout').replace(/\s+/g,'_') + '_' + (CFG.event||'event').replace(/\s+/g,'_') + '_' + Date.now() + '.json';
-  dl(name, JSON.stringify(payload, null, 2), 'application/json');
-  showMsg('rmsg', 'Exported ' + SD.length + ' entries + picklist.', 'success');
+  var content = JSON.stringify(payload, null, 2);
+  var file = new File([content], name, { type: 'application/json' });
+
+  // Try native share sheet first (works great on iPhone — can text, AirDrop, email etc)
+  if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+    navigator.share({
+      title: '494 Scouting Data — ' + (CFG.scout||'Scout'),
+      text: SD.length + ' entries from ' + (CFG.event||'event'),
+      files: [file]
+    }).then(function() {
+      showMsg('rmsg', 'Shared!', 'success');
+    }).catch(function(e) {
+      if (e.name !== 'AbortError') dl(name, content, 'application/json');
+    });
+  } else {
+    // Fallback: download file
+    dl(name, content, 'application/json');
+    showMsg('rmsg', 'Exported ' + SD.length + ' entries. Send the file to your lead scouter.', 'success');
+  }
 }
 
 function impJSON(ev) {
